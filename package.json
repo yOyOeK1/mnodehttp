@@ -1,0 +1,17 @@
+{
+  "name": "mnodehttp",
+  "version": "0.0.1",
+  "description": "Host it by node and http. Ready for yss.",
+  "main": "index.js",
+  "homepage" : "https://github.com/yOyOeK1/",
+  "scripts" : {
+    "start": "./index.js mnodehttp",
+    "kill": "echo 'kill host ..'; kill `ps aux | grep inde | grep mnodehttp | awk '{print $2}'`",
+    "zeroSites": "curl -X GET http://localhost:8080/zeroSites | jq .",
+    "stopServer": "curl -X GET http://localhost:8080/stopServer | jq ."
+  },
+  
+ "license": "MIT",
+ "author": "Bartlomiej Ceglik <yoyoek@wp.pl>"
+  
+}
