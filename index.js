@@ -12,22 +12,75 @@ const sitesH = require('./sitesHelp.js');
 
 const fs = require('fs');
 const path = require('path');
+const WebSocket = require('ws');
 
 
 /* setting / configs */
 var HOST = 'localhost';
 var HOST = '0.0.0.0';
 var PORT = 8080;
+var wsHOST = '0.0.0.0';
+var wsPORT = 1999;
 //var pathToYss = '/data/data/com.termux/files/home/.otdm';
 var pathToYss = '/home/yoyo/Apps/oiyshTerminal/ySS_calibration';
 
 var wsInjection = false;
 var wsInjection = true;
-var yssWSUrl = 'ws://192.168.43.220:1880/ws/yss';
+//var yssWSUrl = 'ws://192.168.43.220:1880/ws/yss';
+//var yssWSUrl = "ws://192.168.43.1:1880/ws/accel/oriCal";
+var yssWSUrl = `ws://192.168.43.220:${wsPORT}/`;
 
 var sitesInjection = true;
 // ---------------------
 
+
+
+
+
+// --------- ws 
+
+function wsAllClients(){
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN) {
+      //client.send(data, { binary: isBinary });
+      console.log('client');
+    }
+  });
+}
+
+const wss = new WebSocket.Server({host: wsHOST ,port:wsPORT});
+wss.on('connection', ws => {
+  console.log('New client connected');
+
+  wsAllClients();
+  // Send a welcome message to the newly connected client
+  ws.send('{"topic":"welcome","msg":"Welcome to the WebSocket server!"}');
+
+  ws.on('message', message => {
+    console.log(`Received message from client: ${message}`);
+
+    // Echo the message back to the client
+    ws.send(`Server received: ${message}`);
+  });
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+  });
+
+  ws.on('error', error => {
+    console.error('WebSocket error:', error);
+  });
+});
+
+
+// ----------ws end
+
+
+
+
+function cl(str){
+//    console.log(str);
+}
 function resSetHeaders( res, code = 200, contentType = 'text/plain' ){
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -55,9 +108,6 @@ function res404( str, res ){
     </html>`);      
 }    
 
-function cl(str){
-    console.log(str);
-}
 
 function bStart(title){
   return { 'title': title, 'tStart': Date.now() };
@@ -108,7 +158,14 @@ var server = http.createServer((req, res) => {
       cl("--- stop server ---");
       resJson(res, {"pathname": pathname, "result": "OK" });
       cl("[i] server is stoped.");
-      server.close();
+      setTimeout(() => {
+        server.close(() => {
+          console.log('Server closed. No new connections will be accepted.');
+          //process.exit();
+          setTimeout(() => {startServer()},1000);
+
+        });
+      }, 1000);
         
     } else if( pathname.substring(0,4) == '/yss' ){
       //cl("[i] doing statics ...["+pathname+"]");
@@ -150,7 +207,13 @@ var server = http.createServer((req, res) => {
 }); 
 
 
-server.listen(PORT, HOST, () => {
-  console.log(`Server running at http://${HOST}:${PORT}/`);
-});
+function startServer(){
 
+  console.log('before listen');
+  server.listen(PORT, HOST, () => {
+    console.log(`Server running at http://${HOST}:${PORT}/`);
+  });
+  console.log('after listen');
+}
+
+startServer();
