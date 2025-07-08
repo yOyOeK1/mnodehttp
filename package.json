@@ -1,6 +1,6 @@
 {
   "name": "mnodehttp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Host it by node and http. Ready for yss.",
   "main": "index.js",
   "homepage": "https://github.com/yOyOeK1/",
@@ -13,7 +13,6 @@
   "license": "MIT",
   "author": "Bartlomiej Ceglik <yoyoek@wp.pl>",
   "dependencies": {
-    "ws": "^8.18.3",
-    "node-red-contrib-ot-lithum-to-percent": "https://github.com/yOyOeK1/node-red-contrib-ot-lithum-to-percent/releases/download/0.0.4/node-red-contrib-ot-lithum-to-percent-0.0.4.tgz"
+    "ws": "^8.18.3"
   }
 }

@@ -38,6 +38,7 @@ var sitesInjection = true;
 
 
 // --------- ws 
+// https://github.com/websockets/ws/blob/master/doc/ws.md
 
 function wsAllClients(){
   wss.clients.forEach(function each(client) {
