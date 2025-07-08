@@ -1,18 +1,20 @@
 {
   "name": "mnodehttp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Host it by node and http. Ready for yss.",
   "main": "index.js",
   "homepage": "https://github.com/yOyOeK1/",
   "scripts": {
-    "start": "./index.js mnodehttp",
-    "kill": "echo 'kill host ..'; kill `ps aux | grep inde | grep mnodehttp | awk '{print $2}'`",
+    "start": "./serverHttp.js mnodehttp",
+    "kill": "echo 'kill host ..'; kill `ps aux | grep serverH | grep mnodehttp | awk '{print $2}'`",
     "zeroSites": "curl -X GET http://localhost:8080/zeroSites | jq .",
-    "stopServer": "curl -X GET http://localhost:8080/stopServer | jq ."
+    "stopServer": "curl -X GET http://localhost:8080/stopServer | jq .",
+    "buildIt": "npm pack"
   },
   "license": "MIT",
   "author": "Bartlomiej Ceglik <yoyoek@wp.pl>",
   "dependencies": {
+    "node-yss": "https://github.com/yOyOeK1/node-yss/raw/refs/heads/main/node-yss-0.0.4.tgz",
     "ws": "^8.18.3"
   }
 }

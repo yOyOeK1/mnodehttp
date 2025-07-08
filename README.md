@@ -12,6 +12,8 @@ working unit, testing / using it
 
 * *PORT* - port of http interface
 
+* *yssWSUrl* - need to be edit in **serverHttp.js**
+
 * *pathToYss* - physical path to files with yss
 
 * *yssWSUrl* - injection option of custome ws url

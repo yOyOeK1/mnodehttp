@@ -111,6 +111,7 @@ function getInjectionStr( pathToYss ){
 
 function getSitesIndex( path, external ){
   let list = dirList( path );
+  if( list == undefined ) return [];
   let tr = [];
   
   for( let d=0,dc=list.length; d<dc; d++ ){

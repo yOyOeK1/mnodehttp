@@ -7,8 +7,13 @@ function cl(str){
 
 function dirList( path ){
     let tr = [];
-    files = fs.readdirSync( path );
-    return files;
+    try{
+        files = fs.readdirSync( path );
+        return files;
+    }catch(e){
+        cl(`[e] No target directory [${path}]`);
+        return undefined;
+    }
 }
 
 function fileRead( path ){
