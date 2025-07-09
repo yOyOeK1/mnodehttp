@@ -9,6 +9,7 @@ dirList = fsH.dirList;
 const mimeH = require('./mimeHelp.js');
 getMimeFromExt = mimeH.getMimeFromExt;
 const sitesH = require('./sitesHelp.js');
+const nyss = require("node-yss");
 
 const fs = require('fs');
 const path = require('path');
@@ -23,7 +24,10 @@ var wsHOST = '0.0.0.0';
 var wsPORT = 1999;
 //var pathToYss = '/data/data/com.termux/files/home/.otdm';
 //var pathToYss = '/home/yoyo/Apps/oiyshTerminal/ySS_calibration';
-var pathToYss = path.join(__dirname, "node_modules", "node-yss","yss");
+var pathToYss = path.join( 
+    nyss.telMeYourHome(`serverHttp ${HOST}:${PORT}`),
+    "yss"
+  );
 
 var wsInjection = false;
 var wsInjection = true;
@@ -50,6 +54,7 @@ function wsAllClients(){
   });
 }
 
+cl(`[i] Server running at ws://${wsHOST}:${wsPORT}`);
 const wss = new WebSocket.Server({host: wsHOST ,port:wsPORT});
 wss.on('connection', ws => {
   console.log('New client connected');
@@ -210,12 +215,10 @@ var server = http.createServer((req, res) => {
 
 
 function startServer(){
-
-  console.log('before listen');
   server.listen(PORT, HOST, () => {
     console.log(`Server running at http://${HOST}:${PORT}/`);
   });
-  console.log('after listen');
+
 }
 
 startServer();

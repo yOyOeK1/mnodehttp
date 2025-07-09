@@ -13,3 +13,8 @@ const filePath = path.join(__dirname, 'mySubdirectory', 'myFile.txt');
 console.log(filePath); // Example: /path/to/script/mySubdirectory/myFile.txt
 
 cl( __dirname+'/node_modules/node-yss/yss' );
+
+cl('--------------');
+cl('asking node-yss...');
+let nyss = require('node-yss');
+cl( nyss.telMeYourHome("mnodehttp") );
