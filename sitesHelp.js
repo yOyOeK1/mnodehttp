@@ -38,7 +38,7 @@ function zeroSitesIndex( pathToYss ){
 }
 
 function getInjectionStr( pathToYss, pathsToSites ){
-  if( mcashe != '' ){
+  if( 0 && mcashe != '' ){
     cl(`[cashe] sites index: ${mesCashe}`);
     return mcashe;
   } 

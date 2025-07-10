@@ -8,16 +8,16 @@ const fsH = require('./fsHelp.js');
 dirList = fsH.dirList;
 const mimeH = require('./mimeHelp.js');
 getMimeFromExt = mimeH.getMimeFromExt;
-const sitesH = require('./sitesHelp.js');
+var sitesH = require('./sitesHelp.js');
 const nyss = require("node-yss");
 
 const fs = require('fs');
 const path = require('path');
 var sws = require('./serverWs.js');
 
-
-
+var config = undefined;
 /* setting / configs */
+/*
 var HOST = 'localhost';
 var HOST = '0.0.0.0';
 var PORT = 8080;
@@ -50,14 +50,179 @@ var yssWSUrl = `ws://192.168.43.220:${wsPORT}/`;
 
 var sitesInjection = true;
 var ws = undefined;
-var wsPinger = true;
+var wsPinger = false;
 // ---------------------
 
+*/
 
 
 function cl(str){
     console.log('shtt', str);
 }
+
+
+class serverHttp {
+
+  constructor( nconfig, nwss, nws ){
+    this.config = nconfig;
+    this.wss = nwss;
+    this.ws = nws;
+    this.http = undefined;
+    this.isRunning = false;
+    this.wsPingIter = undefined;
+    this.pingCount = 0;
+    this.cl('serverHttp init ....'+this.config.name);
+  }
+
+  cl(str) {
+    console.log('serH',str);
+    
+  }
+
+  mkInstance(){
+    this.cl('mkInstance: ['+this.config.name+'] http://'+this.config.HOST+":"+this.config.PORT);
+
+    this.http = http.createServer((req, res) => {
+      var { method } = req;
+      var parsedUrl = url.parse(req.url, true);
+      var pathname = parsedUrl.pathname;
+      var query = parsedUrl.query;
+
+      let bT = bStart('All Query');
+      
+      
+      if( pathname.substring(0,14) == '/yss/external/' ){
+        cl(`[i] got external request ...${pathname}`);
+        pathname = '/yss/sitesTestExtDir/'+pathname.substring(14);
+      }
+
+      if( method == 'POST' ){
+        
+        cl(`[d] POST`);
+        cl(query);
+        cl(parsedUrl);
+        resJson(res, {"method": "POST", "pathname": pathname, "result": "OK" });
+        
+
+      } else if( method == 'GET' ){
+        
+        if( pathname == '/zeroSites' ){
+          cl("--- zero sites ---");
+          sitesH.zeroSitesIndex( this.config.pathToYss );
+          resJson(res, {"pathname": pathname, "result": "OK" });
+            
+        } else if( pathname == '/stopServer' ){
+          cl("--- stop server ---");
+          resJson(res, {"pathname": pathname, "result": "OK" });
+          cl("[i] server is stoping ...");
+          sws.sendToAll( this.ws, `{"topic":"ws/event","payload":"server going down"}`);
+          setTimeout(() => {
+            cl('ws closing ....');
+            sws.closeAll( this.ws, 'http down');
+            this.ws.close();
+            cl('ws closed');
+
+            this.http.close(() => {
+              cl('Server http closed. No new connections will be accepted.');
+              //process.exit();
+              setTimeout(() => {this.startServer()},1000);
+
+            });
+          }, 1000);
+
+        } else if( pathname.substring(0,12) == '/yss/siteNo/' ){
+          let t = pathname.split('/');
+          if( t.length <= 5){
+            resJson(res, {"pathname": pathname, "result": "ERROR", "msg": "wrong pathname" });      
+          } else {
+            let sNo = t[3];
+            let fileTr = t.slice(4, t.length).join("/");
+            let fullPath = path.join( this.config.pathsToSites[sNo], fileTr );
+            //cl('[i] --- siteNo injection '+sNo);
+            //resJson(res, {"pathname": pathname, "result": "OK", "siteNo": sNo, "tLen": t.length,
+            //  "file": fileTr,
+            //  "fullPath": fullPath
+            // });
+            let tr = fsH.fileRead(fullPath);
+            resSetHeaders( res, 200, getMimeFromExt(fullPath) );
+            res.end(tr);
+
+          }
+          
+
+
+        } else if( pathname.substring(0,4) == '/yss' ){
+          //cl("[i] doing statics ...["+pathname+"]");
+          let fPath = this.config.pathToYss+'/'+pathname.substring(5);
+          let tr = fsH.fileRead(fPath);
+
+          if( tr != undefined ){
+
+            tr = sitesH.doInjectionForWs( this.config.wsInjection, pathname, this.config.yssWSUrl, tr ); 
+            tr = sitesH.doInjectionForSites( this.config.sitesInjection, pathname, this.config.pathToYss, this.config.pathsToSites, tr );
+
+            resSetHeaders( res, 200, getMimeFromExt(fPath) );
+            res.end(tr);
+            
+          } else { // no file found in /yss/....
+            let tp = `<pre>
+              Deb info ...
+              fPath: ${fPath}
+              tr: ${tr}
+              method: ${method}
+              query: `+(JSON.stringify(query))+`
+              path: `+pathname+`</pre>`;
+            res404( tp, res );      
+            cl(`[e] no file found: ${pathname}`);//cl(tp);
+
+          }
+            
+        } else {
+          res404( '', res );
+
+        } 
+        
+        
+      } // end GET
+      
+
+      bEnd( bT );
+        
+    }); 
+    
+  }
+
+  startServer(){
+    this.cl("startServer of ["+this.config.name+"]");//this.cl(this.http);
+    this.http.listen(this.config.PORT, this.config.HOST, () => {
+      this.cl(`Server HTTP [${this.config.name}] running at http://${this.config.HOST}:${this.config.PORT}/`);
+      //ws = sws.getWsInstance( wsHOST, wsPORT );
+
+    });
+
+    if( this.config.wsPinger ){
+      if( this.wsPingInter == undefined ){
+        this.wsPingInter = setInterval( ()=>{this.sendPingOnWs();}, 10000 );
+      }
+    }
+
+  }
+
+  sendPingOnWs(){
+    //this.cl("ping ...");
+    this.pingCount++;
+    sws.sendToAll(this.ws, `{"topic":"ping","payload":"pong", "count":"${this.pingCount}"}`,
+      "["+this.config.name+'] ping'
+    );
+  }
+
+}
+
+
+
+
+//// ---------------------
+
 
 function resSetHeaders( res, code = 200, contentType = 'text/plain' ){
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -96,139 +261,15 @@ function bEnd( bStartRes ){
 }
 
 var serverRunnit = true;
-var server = http.createServer((req, res) => {
-  var { method } = req;
-  var parsedUrl = url.parse(req.url, true);
-  var pathname = parsedUrl.pathname;
-  var query = parsedUrl.query;
-
-  let bT = bStart('All Query');
-  
-  //console.log("ok req:",req);
-  
-  //if( pathname == '/yss' || pathname == '/yss/' ){
-  //  cl('xxxx');
-  //  pathname = '/yss/index.html';
-  //} 
-//cl(`---pathname [${pathname}]`);
-
-  if( pathname.substring(0,14) == '/yss/external/' ){
-    cl(`[i] got external request ...${pathname}`);
-    pathname = '/yss/sitesTestExtDir/'+pathname.substring(14);
-  }
-
-  if( method == 'POST' ){
-    
-    cl(`[d] POST`);
-    cl(query);
-    cl(parsedUrl);
-    resJson(res, {"method": "POST", "pathname": pathname, "result": "OK" });
-    
-
-  } else if( method == 'GET' ){
-    
-    if( pathname == '/zeroSites' ){
-      cl("--- zero sites ---");
-      sitesH.zeroSitesIndex( pathToYss );
-      resJson(res, {"pathname": pathname, "result": "OK" });
-        
-    } else if( pathname == '/stopServer' ){
-      cl("--- stop server ---");
-      resJson(res, {"pathname": pathname, "result": "OK" });
-      cl("[i] server is stoping ...");
-      sws.sendToAll( ws, `{"topic":"ws/event","payload":"server going down"}`);
-      setTimeout(() => {
-        cl('ws closing ....');
-        sws.closeAll( ws, 'http down');
-        ws.close();
-        cl('ws closed');
-
-        server.close(() => {
-          cl('Server http closed. No new connections will be accepted.');
-          //process.exit();
-          setTimeout(() => {startServer()},1000);
-
-        });
-      }, 1000);
-    } else if( pathname.substring(0,12) == '/yss/siteNo/' ){
-      let t = pathname.split('/');
-      if( t.length <= 5){
-        resJson(res, {"pathname": pathname, "result": "ERROR", "msg": "wrong pathname" });      
-      } else {
-        let sNo = t[3];
-        let fileTr = t.slice(4, t.length).join("/");
-        let fullPath = path.join( pathsToSites[sNo], fileTr );
-        //cl('[i] --- siteNo injection '+sNo);
-        //resJson(res, {"pathname": pathname, "result": "OK", "siteNo": sNo, "tLen": t.length,
-        //  "file": fileTr,
-        //  "fullPath": fullPath
-        // });
-        let tr = fsH.fileRead(fullPath);
-        resSetHeaders( res, code=200, contentType=getMimeFromExt(fullPath) );
-        res.end(tr);
-
-      }
-      
+var server = undefined;
 
 
-    } else if( pathname.substring(0,4) == '/yss' ){
-      //cl("[i] doing statics ...["+pathname+"]");
-      let fPath = pathToYss+'/'+pathname.substring(5);
-      let tr = fsH.fileRead(fPath);
 
-      if( tr != undefined ){
 
-        tr = sitesH.doInjectionForWs( wsInjection, pathname, yssWSUrl, tr ); 
-        tr = sitesH.doInjectionForSites( sitesInjection, pathname, pathToYss, pathsToSites, tr );
 
-        resSetHeaders( res, code=200, contentType=getMimeFromExt(fPath) );
-        res.end(tr);
-        
-      } else { // no file found in /yss/....
-        let tp = `<pre>
-          Deb info ...
-          fPath: ${fPath}
-          tr: ${tr}
-          method: ${method}
-          query: `+(JSON.stringify(query))+`
-          path: `+pathname+`</pre>`;
-        res404( tp, res );      
-        cl(`[e] no file found: ${pathname}`);//cl(tp);
 
-      }
-        
-    } else {
-      res404( '', res );
 
-    } 
-    
-    
-  } // end GET
-   
+//startServer();
 
-  bEnd( bT );
-    
-}); 
 
-function sendPingOnWs(){
-  sws.sendToAll(ws, '{"topic":"ping","payload":"pong"}');
-}
-
-let wsPingInter = undefined;
-if( wsPinger ){
-  if( wsPingInter == undefined ){
-    wsPingInter = setInterval( sendPingOnWs, 10000 );
-
-  }
-}
-
-function startServer(){
-  server.listen(PORT, HOST, () => {
-    cl(`Server HTTP running at http://${HOST}:${PORT}/`);
-    ws = sws.getWsInstance( wsHOST, wsPORT );
-
-  });
-
-}
-
-startServer();
+module.exports = { serverHttp };

@@ -20,7 +20,11 @@ function wsAllClients( wss ){
   });
 }
 
-function sendToAll( wss, data ){
+function sendToAll( wss, data, who = '' ){
+    if( who != '' )cl(`sendToAll [${who}]: `);
+    //cl('wss.clients: ');cl(wss.clients);
+    //if( wss.clients == undefined ) return -1;
+
     wss.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
             client.send(data);
@@ -37,9 +41,9 @@ function closeAll( wss, msg ){
 }
 
 
-function getWsInstance( wsHOST, wsPORT ){
-    cl(`[i] Server WS running at ws://${wsHOST}:${wsPORT}`);
-    let wss = new WebSocket.Server({host: wsHOST ,port:wsPORT});
+function getWsInstance( nconfig ){
+    cl(`[i] Server WS [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
+    let wss = new WebSocket.Server({host:nconfig.wsHOST ,port:nconfig.wsPORT});
     wss.on('connection', ws => {
         cl('New client connected');
 
@@ -48,14 +52,14 @@ function getWsInstance( wsHOST, wsPORT ){
         ws.send('{"topic":"welcome","msg":"Welcome to the WebSocket server!"}');
 
         ws.on('message', message => {
-            cl(`Received message from client: ${message}`);
+            cl(`[${nconfig.name}] Received message from client: ${message}`);
 
             // Echo the message back to the client
             ws.send(`Server received: ${message}`);
         });
 
         ws.on('close', () => {
-            cl('Client disconnected');
+            cl(`Client disconnected [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
         });
 
         ws.on('error', error => {
@@ -65,6 +69,7 @@ function getWsInstance( wsHOST, wsPORT ){
 
     return wss;
 }
+
 
 // ----------ws end
 
