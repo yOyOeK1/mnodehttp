@@ -13,21 +13,34 @@ const nyss = require("node-yss");
 
 const fs = require('fs');
 const path = require('path');
-const WebSocket = require('ws');
+var sws = require('./serverWs.js');
+
 
 
 /* setting / configs */
 var HOST = 'localhost';
 var HOST = '0.0.0.0';
-var PORT = 8081;
+var PORT = 8080;
 var wsHOST = '0.0.0.0';
 var wsPORT = 1999;
-//var pathToYss = '/data/data/com.termux/files/home/.otdm';
-//var pathToYss = '/home/yoyo/Apps/oiyshTerminal/ySS_calibration';
-var pathToYss = path.join( 
+
+let yssFrom = 1; // 2 production | 1 dev 
+if( yssFrom == 0 ){
+  var pathToYss = '/data/data/com.termux/files/home/.otdm';
+}else if( yssFrom == 1 ){
+  var pathToYss = '/home/yoyo/Apps/oiyshTerminal/ySS_calibration';
+}else if ( yssFrom == 2 ){
+  var pathToYss = path.join( 
     nyss.telMeYourHome(`serverHttp ${HOST}:${PORT}`),
     "yss"
   );
+}
+
+let pathsToSites = [
+  //path.join( pathToYss, 'sites' ),
+  '/home/yoyo/Apps/oiyshTerminal/ySS_calibration/sites'
+];
+
 
 var wsInjection = false;
 var wsInjection = true;
@@ -36,58 +49,16 @@ var wsInjection = true;
 var yssWSUrl = `ws://192.168.43.220:${wsPORT}/`;
 
 var sitesInjection = true;
+var ws = undefined;
+var wsPinger = true;
 // ---------------------
 
 
 
-
-
-// --------- ws 
-// https://github.com/websockets/ws/blob/master/doc/ws.md
-
-function wsAllClients(){
-  wss.clients.forEach(function each(client) {
-    if (client.readyState === WebSocket.OPEN) {
-      //client.send(data, { binary: isBinary });
-      console.log('client');
-    }
-  });
-}
-
-cl(`[i] Server running at ws://${wsHOST}:${wsPORT}`);
-const wss = new WebSocket.Server({host: wsHOST ,port:wsPORT});
-wss.on('connection', ws => {
-  console.log('New client connected');
-
-  wsAllClients();
-  // Send a welcome message to the newly connected client
-  ws.send('{"topic":"welcome","msg":"Welcome to the WebSocket server!"}');
-
-  ws.on('message', message => {
-    console.log(`Received message from client: ${message}`);
-
-    // Echo the message back to the client
-    ws.send(`Server received: ${message}`);
-  });
-
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
-
-  ws.on('error', error => {
-    console.error('WebSocket error:', error);
-  });
-});
-
-
-// ----------ws end
-
-
-
-
 function cl(str){
-//    console.log(str);
+    console.log('shtt', str);
 }
+
 function resSetHeaders( res, code = 200, contentType = 'text/plain' ){
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -164,16 +135,42 @@ var server = http.createServer((req, res) => {
     } else if( pathname == '/stopServer' ){
       cl("--- stop server ---");
       resJson(res, {"pathname": pathname, "result": "OK" });
-      cl("[i] server is stoped.");
+      cl("[i] server is stoping ...");
+      sws.sendToAll( ws, `{"topic":"ws/event","payload":"server going down"}`);
       setTimeout(() => {
+        cl('ws closing ....');
+        sws.closeAll( ws, 'http down');
+        ws.close();
+        cl('ws closed');
+
         server.close(() => {
-          console.log('Server closed. No new connections will be accepted.');
+          cl('Server http closed. No new connections will be accepted.');
           //process.exit();
           setTimeout(() => {startServer()},1000);
 
         });
       }, 1000);
-        
+    } else if( pathname.substring(0,12) == '/yss/siteNo/' ){
+      let t = pathname.split('/');
+      if( t.length <= 5){
+        resJson(res, {"pathname": pathname, "result": "ERROR", "msg": "wrong pathname" });      
+      } else {
+        let sNo = t[3];
+        let fileTr = t.slice(4, t.length).join("/");
+        let fullPath = path.join( pathsToSites[sNo], fileTr );
+        //cl('[i] --- siteNo injection '+sNo);
+        //resJson(res, {"pathname": pathname, "result": "OK", "siteNo": sNo, "tLen": t.length,
+        //  "file": fileTr,
+        //  "fullPath": fullPath
+        // });
+        let tr = fsH.fileRead(fullPath);
+        resSetHeaders( res, code=200, contentType=getMimeFromExt(fullPath) );
+        res.end(tr);
+
+      }
+      
+
+
     } else if( pathname.substring(0,4) == '/yss' ){
       //cl("[i] doing statics ...["+pathname+"]");
       let fPath = pathToYss+'/'+pathname.substring(5);
@@ -182,7 +179,7 @@ var server = http.createServer((req, res) => {
       if( tr != undefined ){
 
         tr = sitesH.doInjectionForWs( wsInjection, pathname, yssWSUrl, tr ); 
-        tr = sitesH.doInjectionForSites( sitesInjection, pathname, pathToYss, tr );
+        tr = sitesH.doInjectionForSites( sitesInjection, pathname, pathToYss, pathsToSites, tr );
 
         resSetHeaders( res, code=200, contentType=getMimeFromExt(fPath) );
         res.end(tr);
@@ -213,10 +210,23 @@ var server = http.createServer((req, res) => {
     
 }); 
 
+function sendPingOnWs(){
+  sws.sendToAll(ws, '{"topic":"ping","payload":"pong"}');
+}
+
+let wsPingInter = undefined;
+if( wsPinger ){
+  if( wsPingInter == undefined ){
+    wsPingInter = setInterval( sendPingOnWs, 10000 );
+
+  }
+}
 
 function startServer(){
   server.listen(PORT, HOST, () => {
-    console.log(`Server running at http://${HOST}:${PORT}/`);
+    cl(`Server HTTP running at http://${HOST}:${PORT}/`);
+    ws = sws.getWsInstance( wsHOST, wsPORT );
+
   });
 
 }

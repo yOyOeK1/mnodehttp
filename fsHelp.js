@@ -2,7 +2,7 @@
 const fs = require('fs');
 
 function cl(str){
-    console.log(str);
+    console.log('fsHe',str);
 }
 
 function dirList( path ){

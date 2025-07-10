@@ -1,4 +1,5 @@
 const fs = require('fs');
+var path = require('node:path');
 const fsH = require('./fsHelp.js');
 
 var mcashe = '';
@@ -20,10 +21,10 @@ function doInjectionForWs( wsInjection, pathname, yssWSUrl, tr ){
   return tr;
 }
 
-function doInjectionForSites( sitesInjection, pathname, pathToYss, tr ){
+function doInjectionForSites( sitesInjection, pathname, pathToYss, pathsToSites, tr ){
   if( sitesInjection == true && pathname.substring(4) == '/index.html' ){
     cl("--- have /index.html ---");
-    let ta = getInjectionStr( pathToYss );
+    let ta = getInjectionStr( pathToYss, pathsToSites );
     tr = tr.toString().replace( "noderedinjectpoint", ta);      
     cl("  injection done");
   }
@@ -36,23 +37,32 @@ function zeroSitesIndex( pathToYss ){
   //getInjectionStr( pathToYss );
 }
 
-function getInjectionStr( pathToYss ){
+function getInjectionStr( pathToYss, pathsToSites ){
   if( mcashe != '' ){
     cl(`[cashe] sites index: ${mesCashe}`);
     return mcashe;
   } 
 
   let ta = '';
-  yssSites = getSitesIndex(pathToYss+'/sites', false);
-  yssExtSites = getSitesIndex(pathToYss+'/sitesTestExtDir', true);
+  /*
+  yssSites = getSitesIndex( path.join( pathToYss, 'sites' ), false);
+  yssExtSites = getSitesIndex( path.join( pathToYss, 'sitesTestExtDir' ), true);
   yssPages = yssSites.concat( yssExtSites );
+  */
+  let yssPages = [];
+  for( let p=0,pc=pathsToSites.length; p<pc; p++ ){
+    let yptmp = getSitesIndex( pathsToSites[p], p );
+    let yptmpLen = yptmp.length;
+    cl(`  have ${yptmpLen} sites ...`);
+    yssPages = yssPages.concat( yptmp );
+  }
 
   trsrc = [];
   trjs = [];
   sList= [];
   enabledC = 0;
   
-  for( var p=0,pc=yssPages.length; p<pc; p++ ){
+  for( let p=0,pc=yssPages.length; p<pc; p++ ){
       var plug = yssPages[p];
       //cl(`making site: ${plug.dir} name [${plug.oName}]`);
       if( plug['enable'] == false ){
@@ -62,11 +72,11 @@ function getInjectionStr( pathToYss ){
       sList.push( (plug['enable'] == true?'E-':'D-')+plug.oName );
       if( plug['enable'] == true ) enabledC++;
       
-      for( var s=0,sc=plug['jssrc'].length; s<sc; s++ ){
+      for( let s=0,sc=plug['jssrc'].length; s<sc; s++ ){
           if( plug['external'] == false )
               trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
           else 
-              trsrc.push(`<script src="external/`+plug['fDir']+`/`+plug['jssrc'][s]+`"></script>`);   
+              trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
       }
       
       trjs.push( "\n// -- start of"+plug['oName']);
@@ -109,28 +119,30 @@ function getInjectionStr( pathToYss ){
 
 }
 
-function getSitesIndex( path, external ){
-  let list = dirList( path );
+function getSitesIndex( path2index, siteNo = undefined ){
+  cl(" indexing "+path2index);
+  let list = dirList( path2index );
   if( list == undefined ) return [];
   let tr = [];
   
   for( let d=0,dc=list.length; d<dc; d++ ){
     try{
-      fsStat = fs.statSync( `${path}/`+list[d] );
+      fsStat = fs.statSync(  path.join( path2index, list[d] ) );
       if( fsStat.isDirectory() ){
-        let j = fsH.fileToJson(`${path}/${list[d]}/site.json`);
+        let j = fsH.fileToJson( path.join( path2index, list[d], `site.json` ) );
+        j['siteNo'] = siteNo;
         if( j == undefined ){
             
         }else{
           j["dir"] = list[d];
-          j["fDir"] = (external==true?``:`${path}/`)+`${list[d]}`;
-          j["external"] = external;        
+          j["fDir"] = path.join( path2index, list[d] );
+          j["external"] = true;        
           
           tr.push(j);
         }
       }
     }catch(e){
-      cl(`E getSitesIndex at [${path}] -> ${list[d]}: ${e}`);
+      cl(`E getSitesIndex at [${path2index}] -> ${list[d]}: ${e}`);
     }
 
   }
