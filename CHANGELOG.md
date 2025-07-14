@@ -29,25 +29,36 @@
   - [x] *SM:* - screen manager separet group flow 
   - [x] *toMqttPub:* - from ws to mqtt (now it's spitting it out from node)
 
-- [x] @node-red-contrib-mnodehttp  
-  
-  - [x] node in node-red-contrib first steps  
-  - [x] prevent having two instances on same config  
-  - [x] can do some configuration   
-    - [x] path to yss - need some fixing and checking if it's working
-    - [x] paths to sites - need to be checked
-    - [x] ui clean up in configuration of the node
-    - [x] readme / doc 
-  - [x] ws in to *mnodehttp* instance
-    - [x] ws out to node. 
-    - [x] node to ws.
-
 - [x] @npm_postinstall did a tests chk */home/yoyo/Apps/npmScriptTest1*. It's use case example of postinstall script. To do git partial directory cloning?
 
 - [x] @yss need to look in href to check for **&resizeTo=w,h** so kiosk can be adjusted
 
-- [x] @mnodehttp fsHelp got **fileReadToStr**, **getTempFilePath** 
+- [x] @yss is down to one websocet connection :) oryginaly it had 3
 
+
+
+## v0.1.7 mnodehttp
+
+- [x] found lost parts :)
+
+- [x] fsHelp have cashe option
+
+## v0.01 node-red-contrib-mnodehttp
+
+- [x] node in node-red-contrib first steps  
+- [x] prevent having two instances on same config  
+- [x] can do some configuration   
+  - [x] path to yss - need some fixing and checking if it's working
+  - [x] paths to sites - need to be checked
+  - [x] ui clean up in configuration of the node
+  - [x] readme / doc 
+- [x] ws in to *mnodehttp* instance
+  - [x] ws out to node. 
+  - [x] node to ws.
+
+## v0.1.6
+
+- [x] @mnodehttp fsHelp got **fileReadToStr**, **getTempFilePath** 
 
 ## v0.1.5
 

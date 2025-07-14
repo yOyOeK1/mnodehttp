@@ -37,11 +37,21 @@ function zeroSitesIndex( pathToYss ){
   //getInjectionStr( pathToYss );
 }
 
+var casheCon = {};
+
 function getInjectionStr( pathToYss, pathsToSites ){
-  if( 0 && mcashe != '' ){
+  /*if( 0 && mcashe != '' ){
     cl(`[cashe] sites index: ${mesCashe}`);
     return mcashe;
   } 
+  */
+  let keyOf = JSON.stringify( pathsToSites );
+  cl(`  [cache] -[${keyOf}]-> `);
+  if( casheCon[keyOf] ){
+    cl("      YES");
+    return casheCon[keyOf];
+  }
+
 
   let ta = '';
   /*
@@ -115,6 +125,8 @@ function getInjectionStr( pathToYss, pathsToSites ){
    //cl(yssPages);
   mcashe = ta;
   
+  casheCon[keyOf] = ta;
+
   return ta;
 
 }

@@ -10,30 +10,31 @@ function cl(str){
 // --------- ws 
 // https://github.com/websockets/ws/blob/master/doc/ws.md
 
-function wsAllClients( wss ){
+function wsAllClients( ws ){
     let c = 0;
-    wss.clients.forEach(function each(client) {
-    if (client.readyState === WebSocket.OPEN) {
-      //client.send(data, { binary: isBinary });
-      cl(`client - ${++c}`);
-    }
-  });
+    ws.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+        //client.send(data, { binary: isBinary });
+        c++;
+        }
+    });
+    cl(`client count connected: ${c}`);
 }
 
-function sendToAll( wss, data, who = '' ){
+function sendToAll( ws, data, who = '' ){
     if( who != '' )cl(`sendToAll [${who}]: `);
     //cl('wss.clients: ');cl(wss.clients);
     //if( wss.clients == undefined ) return -1;
 
-    wss.clients.forEach(function each(client) {
+    ws.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
             client.send(data);
         }
     });
 }
 
-function closeAll( wss, msg ){
-    wss.clients.forEach(function each(client) {
+function closeAll( ws, msg ){
+    ws.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
             client.close();
         }
@@ -41,11 +42,14 @@ function closeAll( wss, msg ){
 }
 
 
-function getWsInstance( nconfig ){
+function getWsInstance( nconfig, cbOnMes = undefined ){
     cl(`[i] Server WS [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
     let wss = new WebSocket.Server({host:nconfig.wsHOST ,port:nconfig.wsPORT});
     wss.on('connection', ws => {
         cl('New client connected');
+
+        if( cbOnMes != undefined )
+            cbOnMes( ws, 'on_connection' );
 
         wsAllClients( wss );
         // Send a welcome message to the newly connected client
@@ -53,13 +57,16 @@ function getWsInstance( nconfig ){
 
         ws.on('message', message => {
             cl(`[${nconfig.name}] Received message from client: ${message}`);
-
+            if( cbOnMes != undefined )
+                cbOnMes( ws, 'on_message', message );
             // Echo the message back to the client
-            ws.send(`Server received: ${message}`);
+            //ws.send(`Server received: ${message}`);
         });
 
         ws.on('close', () => {
             cl(`Client disconnected [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
+            if( cbOnMes != undefined )
+                cbOnMes( ws, 'on_close' );
         });
 
         ws.on('error', error => {

@@ -4,7 +4,6 @@ var serCon = require('./serverContainer');
 const nyss = require("node-yss");
 
 const path = require('path');
-const { config } = require('process');
 
 
 
@@ -56,6 +55,8 @@ let sc1 = new serCon.serverContainer( 1, config1 );
 
 sc1.initServers();
 sc1.startServer();
-cl(`Open web browser at: http://${config1.HOST}:${config1.PORT}`);
+//cl(`Open web browser at: http://${config1.HOST}:${config1.PORT}`);
+cl(`\n\n\tOpen web browser at: http://${config1.HOST}:${config1.PORT}\n\n`);
+
 
 cl("Done --- end");

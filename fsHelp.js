@@ -31,10 +31,18 @@ function fileReadToStr( path ){
     return t.slice(0,t.length);
 }
 
+var cashefr = {};
+
 function fileRead( path ){
+    if( 0 && cashefr[path] ){
+        //cl(`    [cache fs] `);
+        return cashefr[path];
+    }
+
     try{
         fc = fs.readFileSync(path);
-        return fc.slice(0,fc.length);
+        cashefr[path] = fc.slice(0,fc.length);
+        return cashefr[path];
     }catch(e){
         cl("[e] Reading file error no file: "+e);
     }

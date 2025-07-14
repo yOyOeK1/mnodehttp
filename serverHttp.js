@@ -193,9 +193,9 @@ class serverHttp {
   }
 
   startServer(){
-    this.cl("startServer of ["+this.config.name+"]");//this.cl(this.http);
+    this.cl("[i] StartServer of ["+this.config.name+"] ...");//this.cl(this.http);
     this.http.listen(this.config.PORT, this.config.HOST, () => {
-      this.cl(`Server HTTP [${this.config.name}] running at http://${this.config.HOST}:${this.config.PORT}/`);
+      this.cl(`[i] Server HTTP [${this.config.name}] running at http://${this.config.HOST}:${this.config.PORT}/`);
       //ws = sws.getWsInstance( wsHOST, wsPORT );
 
     });
@@ -206,6 +206,16 @@ class serverHttp {
       }
     }
 
+  }
+
+  stopServer(){
+    this.cl("[i] StopServer of ["+this.config.name+"]");
+    this.http.close(()=>{cl('[i] Server http closed. No new connections will be accepted.');});
+    if( this.wsPingInter != undefined ){
+      cl("stopPing Interval ...");
+      clearInterval( this.wsPingInter );
+    }
+    
   }
 
   sendPingOnWs(){
