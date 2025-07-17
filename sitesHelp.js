@@ -47,7 +47,7 @@ function getInjectionStr( pathToYss, pathsToSites ){
   */
   let keyOf = JSON.stringify( pathsToSites );
   cl(`  [cache] -[${keyOf}]-> `);
-  if( casheCon[keyOf] ){
+  if( 0 && casheCon[keyOf] ){
     cl("      YES");
     return casheCon[keyOf];
   }
@@ -132,7 +132,7 @@ function getInjectionStr( pathToYss, pathsToSites ){
 }
 
 function getSitesIndex( path2index, siteNo = undefined ){
-  cl(" indexing "+path2index);
+  cl(" indexing siteNo["+siteNo+"] : "+path2index);
   let list = dirList( path2index );
   if( list == undefined ) return [];
   let tr = [];
@@ -141,20 +141,22 @@ function getSitesIndex( path2index, siteNo = undefined ){
     try{
       fsStat = fs.statSync(  path.join( path2index, list[d] ) );
       if( fsStat.isDirectory() ){
-        let j = fsH.fileToJson( path.join( path2index, list[d], `site.json` ) );
-        j['siteNo'] = siteNo;
+        fPathStr = path.join( path2index, list[d], `site.json` );
+        let j = fsH.fileToJson( fPathStr );
         if( j == undefined ){
-            
+          j = {};
+          cl(`E dir [${fPathStr}] without site.json file !!!`);
         }else{
           j["dir"] = list[d];
           j["fDir"] = path.join( path2index, list[d] );
           j["external"] = true;        
+          j['siteNo'] = siteNo;
           
           tr.push(j);
         }
       }
     }catch(e){
-      cl(`E getSitesIndex at [${path2index}] -> ${list[d]}: ${e}`);
+      cl(`E getSitesIndex at siteNo: [${siteNo}] [${path2index}] -> ${list[d]}: ${e}`);
     }
 
   }
