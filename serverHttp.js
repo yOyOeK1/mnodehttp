@@ -221,9 +221,12 @@ class serverHttp {
   sendPingOnWs(){
     //this.cl("ping ...");
     this.pingCount++;
-    sws.sendToAll(this.ws, `{"topic":"ping","payload":"pong", "count":"${this.pingCount}"}`,
-      "["+this.config.name+'] ping'
-    );
+    if( sws.wsClientsOnline( this.ws ) != 0 ){
+     sws.sendToAll(this.ws, `{"topic":"ping","payload":"pong", "count":"${this.pingCount}"}`,
+        "["+this.config.name+'] ping'
+      );
+    
+    }
   }
 
 }

@@ -10,14 +10,19 @@ function cl(str){
 // --------- ws 
 // https://github.com/websockets/ws/blob/master/doc/ws.md
 
-function wsAllClients( ws ){
+function wsClientsOnline( ws ){
     let c = 0;
     ws.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
-        //client.send(data, { binary: isBinary });
-        c++;
+            c++;
         }
     });
+    return c;
+    
+}
+
+function wsAllClients( ws ){
+    let c = wsClientsOnline( ws );
     cl(`client count connected: ${c}`);
 }
 
@@ -55,6 +60,8 @@ function getWsInstance( nconfig, cbOnMes = undefined ){
         // Send a welcome message to the newly connected client
         ws.send('{"topic":"welcome","msg":"Welcome to the WebSocket server!"}');
 
+        
+        
         ws.on('message', message => {
             cl(`[${nconfig.name}] Received message from client: ${message}`);
             if( cbOnMes != undefined )
@@ -63,16 +70,24 @@ function getWsInstance( nconfig, cbOnMes = undefined ){
             //ws.send(`Server received: ${message}`);
         });
 
+        
+        
         ws.on('close', () => {
             cl(`Client disconnected [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
             if( cbOnMes != undefined )
                 cbOnMes( ws, 'on_close' );
+
         });
+
+
 
         ws.on('error', error => {
             console.error('WebSocket error:', error);
         });
+
+
     });
+
 
     return wss;
 }
@@ -80,4 +95,4 @@ function getWsInstance( nconfig, cbOnMes = undefined ){
 
 // ----------ws end
 
-module.exports = { getWsInstance, sendToAll, closeAll };
+module.exports = { getWsInstance, sendToAll, closeAll, wsClientsOnline };

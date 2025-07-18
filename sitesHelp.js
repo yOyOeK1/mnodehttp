@@ -71,6 +71,8 @@ function getInjectionStr( pathToYss, pathsToSites ){
   trjs = [];
   sList= [];
   enabledC = 0;
+  moduleStr = '';
+  moduleCode = '';
   
   for( let p=0,pc=yssPages.length; p<pc; p++ ){
       var plug = yssPages[p];
@@ -79,13 +81,26 @@ function getInjectionStr( pathToYss, pathsToSites ){
         trsrc.push( '<!-- IS DISABLED ' );
         trjs.push('/* IS DISABLED ');
       }
-      sList.push( (plug['enable'] == true?'E-':'D-')+plug.oName );
+
+      sList.push( (plug['enable'] == true ? 'E-' : 'D-') + plug.oName );
       if( plug['enable'] == true ) enabledC++;
       
+      if( plug['asModule'] == true ){
+        trsrc.push(`<script>var ${plug.oName} = -1;</script>`);
+       
+      }
+
+
       for( let s=0,sc=plug['jssrc'].length; s<sc; s++ ){
           if( plug['external'] == false )
               trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
-          else 
+          else if( plug['external'] == true && plug['asModule'] == true ) {
+            trsrc.push(`
+              <script type="module">
+                import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}";
+                ${plug.oName} = itmp.${plug.oName};
+              </script>`);   
+          } else 
               trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
       }
       
