@@ -3,8 +3,10 @@ function getMimeFromExt(fname){
   var ext = fname.split('.');
   ext = ext[ ext.length-1 ];
   //application/octet-stream
-  if( ext == "js" || ext == "map" || ext == "vue" )
-      mimeStr = "text/javascript";
+  if( ext == "js" || ext == "map" ) 
+    mimeStr = "text/javascript";
+  else if( ext == "vue" )
+    mimeStr = "application/javascript"
   else if( ext == "mjs" )
       mimeStr = "text/javascript";
   else if( ext == "png" )
@@ -29,4 +31,9 @@ function getMimeFromExt(fname){
   return mimeStr;
 }
 
-module.exports = { getMimeFromExt };
+function getExt( fname ){
+  let ext = fname.split('.');
+  return ext[ ext.length-1 ];
+}
+
+module.exports = { getExt, getMimeFromExt };

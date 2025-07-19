@@ -14,6 +14,7 @@ const nyss = require("node-yss");
 const fs = require('fs');
 const path = require('path');
 var sws = require('./serverWs.js');
+const { mkVueTemplateStr } = require('./vueHelp.js');
 
 var config = undefined;
 /* setting / configs */
@@ -144,12 +145,16 @@ class serverHttp {
             //  "fullPath": fullPath
             // });
             let tr = fsH.fileRead(fullPath);
+            
+            if( mimeH.getExt(fullPath) == 'vue' ){
+              tr = mkVueTemplateStr( tr, fullPath );
+            }
+            
             resSetHeaders( res, 200, getMimeFromExt(fullPath) );
             res.end(tr);
 
           }
           
-
 
         } else if( pathname.substring(0,4) == '/yss' ){
           //cl("[i] doing statics ...["+pathname+"]");
