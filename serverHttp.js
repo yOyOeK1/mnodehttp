@@ -82,14 +82,28 @@ class serverHttp {
 
   mkInstance(){
     this.cl('mkInstance: ['+this.config.name+'] http://'+this.config.HOST+":"+this.config.PORT);
-
     this.http = http.createServer((req, res) => {
+      
+      this.requestYss( req, res, ()=>{
+        cl(`404 by next() `);
+        res404( '', res );
+      } );
+
+    });
+
+  }
+
+
+
+  requestYss( req, res, next ){
+
       var { method } = req;
       var parsedUrl = url.parse(req.url, true);
       var pathname = parsedUrl.pathname;
       var query = parsedUrl.query;
-
+      let filePathFull = path.resolve( '/', req.url.substring(1) );
       let bT = bStart('All Query');
+      //cl('[d] filePathFull: '+filePathFull+"\n\tend:"+filePathFull.endsWith('.html'));
       
       
       if( pathname.substring(0,14) == '/yss/external/' ){
@@ -132,6 +146,7 @@ class serverHttp {
           }, 1000);
 
         } else if( pathname.substring(0,12) == '/yss/siteNo/' ){
+
           let t = pathname.split('/');
           if( t.length <= 5){
             resJson(res, {"pathname": pathname, "result": "ERROR", "msg": "wrong pathname" });      
@@ -145,8 +160,13 @@ class serverHttp {
             //  "fullPath": fullPath
             // });
             let tr = fsH.fileRead(fullPath);
+            if(tr == undefined ){
+              next();
+              return 0;
+            }
             
-            if( mimeH.getExt(fullPath) == 'vue' ){
+            //if( mimeH.getExt(fullPath) == 'vue' ){
+            if( filePathFull.endsWith('.vue') ){
               tr = mkVueTemplateStr( tr, fullPath );
             }
             
@@ -156,15 +176,18 @@ class serverHttp {
           }
           
 
-        } else if( pathname.substring(0,4) == '/yss' ){
+        } else if( filePathFull.startsWith('/yss/') ){
+
           //cl("[i] doing statics ...["+pathname+"]");
           let fPath = this.config.pathToYss+'/'+pathname.substring(5);
           let tr = fsH.fileRead(fPath);
 
           if( tr != undefined ){
 
-            tr = sitesH.doInjectionForWs( this.config.wsInjection, pathname, this.config.yssWSUrl, tr ); 
-            tr = sitesH.doInjectionForSites( this.config.sitesInjection, pathname, this.config.pathToYss, this.config.pathsToSites, tr );
+            if( filePathFull.endsWith('/yss/index.html') ){
+              tr = sitesH.doInjectionForWs( this.config.wsInjection, pathname, this.config.yssWSUrl, tr ); 
+              tr = sitesH.doInjectionForSites( this.config.sitesInjection, pathname, this.config.pathToYss, this.config.pathsToSites, tr );
+            }
 
             resSetHeaders( res, 200, getMimeFromExt(fPath) );
             res.end(tr);
@@ -183,7 +206,8 @@ class serverHttp {
           }
             
         } else {
-          res404( '', res );
+          //res404( '', res );
+          next();
 
         } 
         
@@ -193,7 +217,7 @@ class serverHttp {
 
       bEnd( bT );
         
-    }); 
+     
     
   }
 
