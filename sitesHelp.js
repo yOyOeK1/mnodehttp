@@ -71,19 +71,29 @@ function getInjectionStr( pathToYss, pathsToSites ){
   trjs = [];
   sList= [];
   enabledC = 0;
+  viteC = 0;
   moduleStr = '';
   moduleCode = '';
   
   for( let p=0,pc=yssPages.length; p<pc; p++ ){
       var plug = yssPages[p];
       //cl(`making site: ${plug.dir} name [${plug.oName}]`);
-      if( plug['enable'] == false ){
+
+
+      if( plug['enable'] == false /*|| plug['asVite'] == true */){
         trsrc.push( '<!-- IS DISABLED ' );
         trjs.push('/* IS DISABLED ');
       }
 
-      sList.push( (plug['enable'] == true ? 'E-' : 'D-') + plug.oName );
+
+      sList.push( 
+        (plug['asVite'] == true  ? 'V' :'')+
+        (plug['enable'] == true ? 'E-' : 'D-') + 
+        plug.oName 
+      );
+      
       if( plug['enable'] == true ) enabledC++;
+      if( plug['asVite'] == true ) viteC++;
       
       if( plug['asModule'] == true ){
         trsrc.push(`<script>var ${plug.oName} = -1;</script>`);
@@ -92,16 +102,26 @@ function getInjectionStr( pathToYss, pathsToSites ){
 
 
       for( let s=0,sc=plug['jssrc'].length; s<sc; s++ ){
-          if( plug['external'] == false )
+          if( plug['external'] == false ){
               trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
-          else if( plug['external'] == true && plug['asModule'] == true ) {
-            trsrc.push(`
-              <script type="module">
-                import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}";
-                ${plug.oName} = itmp.${plug.oName};
-              </script>`);   
-          } else 
-              trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
+
+          } else if( plug['external'] == true && plug['asVite'] == true ) {
+            trsrc.push(`<script type="module">\n`+
+                ` import * as itmp from "/sites/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+                ` ${plug.oName} = itmp.${plug.oName}; \n`+
+              `</script>\n`);   
+
+          } else if( plug['external'] == true && plug['asModule'] == true ) {
+            trsrc.push(`<script type="module">\n`+
+                ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+                ` ${plug.oName} = itmp.${plug.oName}; \n`+
+              `</script>\n`);   
+
+          } else {
+            trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
+
+          }
+
       }
       
       trjs.push( "\n// -- start of"+plug['oName']);
@@ -111,10 +131,11 @@ function getInjectionStr( pathToYss, pathsToSites ){
       trjs.push( 'pager.addPage( yssPages['+p+']["o"] );' );
       trjs.push( "// -- end of"+plug['oName']+"\n" );
       
-      if( plug['enable'] == false ){
+      if( plug['enable'] == false /* || plug['asVite'] == true */){
           trsrc.push( ' IS DISABLED -->' );
           trjs.push( ' IS DISABLED */' );
       }
+
   }
   
   
@@ -135,7 +156,7 @@ function getInjectionStr( pathToYss, pathsToSites ){
   mesCashe = "sites build count: "+yssPages.length+` / `+sList.length+` enabled: ${enabledC}/${sList.length}`;
   cl("[i] sites build count: "+yssPages.length+` / `+sList.length+
     `\n\t `+sList.join(', ')+'\n'+
-    `enabled: ${enabledC}/${sList.length}`
+    `enabled: ${enabledC}/${sList.length} and (${viteC}) in asVite`
    );
    //cl(yssPages);
   mcashe = ta;
@@ -148,7 +169,7 @@ function getInjectionStr( pathToYss, pathsToSites ){
 
 function getSitesIndex( path2index, siteNo = undefined ){
   cl(" indexing siteNo["+siteNo+"] : "+path2index);
-  let list = dirList( path2index );
+  let list = fsH.dirList( path2index );
   if( list == undefined ) return [];
   let tr = [];
   
