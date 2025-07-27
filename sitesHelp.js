@@ -4,6 +4,7 @@ const fsH = require('./fsHelp.js');
 
 var mcashe = '';
 var mesCashe = '';
+var yssPagesArrayLast = -1;
 
 function cl(str){
     console.log(str);
@@ -39,7 +40,7 @@ function zeroSitesIndex( pathToYss ){
 
 var casheCon = {};
 
-function getInjectionStr( pathToYss, pathsToSites ){
+function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   /*if( 0 && mcashe != '' ){
     cl(`[cashe] sites index: ${mesCashe}`);
     return mcashe;
@@ -105,19 +106,29 @@ function getInjectionStr( pathToYss, pathsToSites ){
           if( plug['external'] == false ){
               trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
 
-          } else if( plug['external'] == true && plug['asVite'] == true ) {
-            trsrc.push(`<script type="module">\n`+
-                ` import * as itmp from "/sites/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+          // plugin 
+          }else if( plug['asPlugin'] == true && plug['asModule'] == true && plug['asVite'] == true  ){
+             trsrc.push(`<script type="module">\n`+
+                ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
                 ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
 
-          } else if( plug['external'] == true && plug['asModule'] == true ) {
+          } else if( plug['external'] == true && plug['asVite'] == true ) {
+            
+            trsrc.push(`<script type="module">\n`+
+              ` import * as itmp from "/sites/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+              ` ${plug.oName} = itmp.${plug.oName}; \n`+
+              `</script>\n`);   
+              
+          } else if( plug['external'] == true && plug['asModule'] == true ){
+
             trsrc.push(`<script type="module">\n`+
                 ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
                 ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
 
           } else {
+            
             trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
 
           }
@@ -161,10 +172,30 @@ function getInjectionStr( pathToYss, pathsToSites ){
    //cl(yssPages);
   mcashe = ta;
   
-  casheCon[keyOf] = ta;
+  //casheCon[keyOf] = ta;
+  
+  if( resAs == 'html' )
+    return ta;
+  else if( resAs == 'yssPages' )
+    return yssPages;
 
-  return ta;
+}
 
+
+function doSiteToJ( path2index, listd, siteNo ){
+  fPathStr = path.join( path2index, listd, `site.json` );
+  //cl('doSiteToJ: fPathStr: '+fPathStr);
+  let j = fsH.fileToJson( fPathStr );
+  if( j == undefined ){
+    cl(`E dir [${fPathStr}] without site.json file !!!`);
+    return undefined;
+  }else{
+    j["dir"] = listd;
+    j["fDir"] = path.join( path2index, listd );
+    j["external"] = true;        
+    j['siteNo'] = siteNo;
+    return j;
+  }
 }
 
 function getSitesIndex( path2index, siteNo = undefined ){
@@ -172,23 +203,19 @@ function getSitesIndex( path2index, siteNo = undefined ){
   let list = fsH.dirList( path2index );
   if( list == undefined ) return [];
   let tr = [];
-  
+
+  // dis with subdirectoris?
   for( let d=0,dc=list.length; d<dc; d++ ){
     try{
+      //dir
       fsStat = fs.statSync(  path.join( path2index, list[d] ) );
       if( fsStat.isDirectory() ){
-        fPathStr = path.join( path2index, list[d], `site.json` );
-        let j = fsH.fileToJson( fPathStr );
-        if( j == undefined ){
-          j = {};
-          cl(`E dir [${fPathStr}] without site.json file !!!`);
-        }else{
-          j["dir"] = list[d];
-          j["fDir"] = path.join( path2index, list[d] );
-          j["external"] = true;        
-          j['siteNo'] = siteNo;
-          
+        
+        // do directory of site
+        let j = doSiteToJ( path2index, list[d], siteNo );
+        if( j != undefined ){
           tr.push(j);
+
         }
       }
     }catch(e){
@@ -197,8 +224,15 @@ function getSitesIndex( path2index, siteNo = undefined ){
 
   }
 
+  // direct site path
+  let j = doSiteToJ( path2index, '', siteNo );
+  if( j != undefined ){
+    cl("[d] direct site path :) (plugin ?)")
+    tr.push( j );
+  }
+
   return tr;
 
 }
 
-module.exports = { getSitesIndex, doInjectionForWs, doInjectionForSites, getInjectionStr,zeroSitesIndex };
+module.exports = { getSitesIndex, doInjectionForWs, doInjectionForSites, getInjectionStr,zeroSitesIndex, yssPagesArrayLast };
