@@ -22,7 +22,25 @@ function bEnd( bStartRes ){
   //cl(`[ben] ${bStartRes.title} in ${inT}mil`);
 }
 
-function requestYss( req, res, next, config ){
+async function transformIt( server, filePath , res, req){
+    console.log(`transformIt filePath: ${filePath}`);
+    let transformedResult = await server.transformRequest(filePath, {
+        ssr: false, // Set ssr to false for client-side code
+        });
+    if (transformedResult) {
+        try{
+            res.setHeader('Content-Type', 'application/javascript');
+        }catch(e){
+            console.error(`transform can't set header on response :/`,e);
+        }
+        res.end(transformedResult.code);
+        //console.log(`ok so send it as transformed :)\n\n${transformedResult.code}`);
+        return 0;
+    }
+    return `transforme error :(`;
+}
+
+function requestYss( req, res, next, config, server ){
 
     var { method } = req;
     var parsedUrl = url.parse(req.url, true);
@@ -30,20 +48,20 @@ function requestYss( req, res, next, config ){
     var query = parsedUrl.query;
     let filePathFull = path.resolve( '/', req.url.substring(1) );
     let bT = bStart('All Query');
-    //cl('[d] filePathFull: '+filePathFull+"\n\tend:"+filePathFull.endsWith('.html'));
+    //cl(`[d] parsedUrl: ${parsedUrl.pathname}  filePathFull: `+filePathFull+"\n\tend:"+filePathFull.endsWith('.html'));
     
     
     if( pathname.substring(0,14) == '/yss/external/' ){
-    cl(`[i] got external request ...${pathname}`);
-    pathname = '/yss/sitesTestExtDir/'+pathname.substring(14);
+        cl(`[i] got external request ...${pathname}`);
+        pathname = '/yss/sitesTestExtDir/'+pathname.substring(14);
     }
 
     if( method == 'POST' ){
     
-    cl(`[d] POST`);
-    cl(query);
-    cl(parsedUrl);
-    resJson(res, {"method": "POST", "pathname": pathname, "result": "OK" });
+        cl(`[d] POST`);
+        cl(query);
+        cl(parsedUrl);
+        resJson(res, {"method": "POST", "pathname": pathname, "result": "OK" });
     
 
     } else if( method == 'GET' ){
@@ -76,30 +94,48 @@ function requestYss( req, res, next, config ){
 
             let t = pathname.split('/');
             if( t.length <= 5){
-            resJson(res, {"pathname": pathname, "result": "ERROR", "msg": "wrong pathname" });      
-            } else {
-            let sNo = t[3];
-            let fileTr = t.slice(4, t.length).join("/");
-            let fullPath = path.join( config.pathsToSites[sNo], fileTr );
-            //cl('[i] --- siteNo injection '+sNo);
-            //resJson(res, {"pathname": pathname, "result": "OK", "siteNo": sNo, "tLen": t.length,
-            //  "file": fileTr,
-            //  "fullPath": fullPath
-            // });
-            let tr = fsH.fileRead(fullPath);
-            if(tr == undefined ){
-                next();
+                resJson(res, {"pathname": pathname, "result": "ERROR", "msg": "wrong pathname" });      
                 return 0;
-            }
-            
-            //if( mimeH.getExt(fullPath) == 'vue' ){
-            if( filePathFull.endsWith('.vue') ){
-                tr = mkVueTemplateStr( tr, fullPath );
-            }
-            
-            resSetHeaders( res, 200, getMimeFromExt(fullPath) );
-            res.end(tr);
+            } else {
+                let sNo = t[3];
+                let fileTr = t.slice(4, t.length).join("/");
+                let fullPath = path.join( config.pathsToSites[sNo], fileTr );
+                
+                console.log(`-- path: ${fullPath}`);
+                if( fullPath.endsWith('.js') &&
+                    fullPath == '/home/yoyo/Apps/viteyss/node_modules/viteyss-site-otdmtools/c_otdmtoolsPage.js'
+                ){
+                    console.log(`----------path now: ${config.pathsToSites[sNo]}`);
+                    res.setHeader('Content-Type', 'application/javascript');
+                    let tRes = transformIt(server, 
+                        fullPath,
+                        res, req);
+                    tRes.then((r)=>{
+                        console.log(`so transform done:\n${r}`);
+                    });
+                    return 0;
 
+                }
+
+                //cl('[i] --- siteNo injection '+sNo);
+                //resJson(res, {"pathname": pathname, "result": "OK", "siteNo": sNo, "tLen": t.length,
+                //  "file": fileTr,
+                //  "fullPath": fullPath
+                // });
+                let tr = fsH.fileRead(fullPath);
+                if(tr == undefined ){
+                    return 'no file found';
+                }
+                
+
+                //if( mimeH.getExt(fullPath) == 'vue' ){
+                if( filePathFull.endsWith('.vue') ){
+                    tr = mkVueTemplateStr( tr, fullPath );
+                }
+                
+                resSetHeaders( res, 200, getMimeFromExt(fullPath) );
+                res.end(tr);
+                return 0;
             }
             
 
@@ -116,10 +152,27 @@ function requestYss( req, res, next, config ){
                 
                 if( filePathFull == '/yss/index.html' )
                     tr = sitesH.doInjectionForSites( config.sitesInjection, pathname, config.pathToYss, config.pathsToSites, tr );
+                
+                /*
+                if( filePathFull == '/yss/testy.js' ){
+                    
+                    let transformedResult = await server.transformRequest('/home/yoyo/Apps/oiyshTerminal/ySS_calibration/testy.js', {
+                        ssr: false, // Set ssr to false for client-side code
+                        });
+                    if (transformedResult) {
+                        res.setHeader('Content-Type', 'application/javascript');
+                        res.end(transformedResult.code);
+                        //console.log(`ok so send it as transformed :)\n\n${transformedResult.code}`);
+                        return 0;
+                    }
 
+
+                }
+                    */
 
                 resSetHeaders( res, 200, getMimeFromExt(fPath) );
                 res.end(tr);
+                return 0;
             
             } else { //  no file found in /yss/....
                 let tp = `<pre>
@@ -131,13 +184,14 @@ function requestYss( req, res, next, config ){
                     path: `+pathname+`</pre>`;
                 //res404( tp, res );      
                 cl(`[e] no file found: ${pathname}`);//cl(tp);
-                next();
+                return 'no file in /yss/';
 
             }
+
             
         } else {
             //res404( '', res );
-            next();
+            return '404';
 
         } 
         
@@ -148,7 +202,7 @@ function requestYss( req, res, next, config ){
     bEnd( bT );
     
     
-
+    return 0;
 }
 
 

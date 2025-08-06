@@ -40,6 +40,7 @@ function zeroSitesIndex( pathToYss ){
 
 var casheCon = {};
 
+
 function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   /*if( 0 && mcashe != '' ){
     cl(`[cashe] sites index: ${mesCashe}`);
@@ -52,23 +53,18 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
     cl("      YES");
     return casheCon[keyOf];
   }
-
-
+  
+  
   let ta = '';
+  let yssPages = getYssPagesSitesIndex( pathsToSites );
   /*
   yssSites = getSitesIndex( path.join( pathToYss, 'sites' ), false);
   yssExtSites = getSitesIndex( path.join( pathToYss, 'sitesTestExtDir' ), true);
   yssPages = yssSites.concat( yssExtSites );
   */
-  let yssPages = [];
-  for( let p=0,pc=pathsToSites.length; p<pc; p++ ){
-    let yptmp = getSitesIndex( pathsToSites[p], p );
-    let yptmpLen = yptmp.length;
-    cl(`  have ${yptmpLen} sites ...`);
-    yssPages = yssPages.concat( yptmp );
-  }
+  
 
-  trsrc = [];
+ trsrc = [];
   trjs = [];
   sList= [];
   enabledC = 0;
@@ -77,9 +73,9 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   moduleCode = '';
   
   for( let p=0,pc=yssPages.length; p<pc; p++ ){
-      var plug = yssPages[p];
+    var plug = yssPages[p];
       //cl(`making site: ${plug.dir} name [${plug.oName}]`);
-
+      
 
       if( plug['enable'] == false /*|| plug['asVite'] == true */){
         trsrc.push( '<!-- IS DISABLED ' );
@@ -98,80 +94,95 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
       
       if( plug['asModule'] == true ){
         trsrc.push(`<script>var ${plug.oName} = -1;</script>`);
-       
+        
       }
+      
 
-
-      for( let s=0,sc=plug['jssrc'].length; s<sc; s++ ){
+      let homeUrl = '';
+      let jssrcLen = plug['jssrc'] != undefined ? plug['jssrc'].length: 0;
+      for( let s=0,sc=jssrcLen; s<sc; s++ ){
           if( plug['external'] == false ){
-              trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
+              
+            trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
+              homeUrl = `sites/`+plug['dir']+`/`+plug['jssrc'][s];
 
-          // plugin 
+              // plugin 
           }else if( plug['asPlugin'] == true && plug['asModule'] == true && plug['asVite'] == true  ){
-             trsrc.push(`<script type="module">\n`+
-                ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
-                ` ${plug.oName} = itmp.${plug.oName}; \n`+
-              `</script>\n`);   
-
-          } else if( plug['external'] == true && plug['asVite'] == true ) {
+            
+            trsrc.push(`<script type="module">\n`+
+              ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+              ` ${plug.oName} = itmp.${plug.oName}; \n`+
+              `</script>\n`);
+              homeUrl = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
+              
+          } else if( plug['external'] == true && plug['asVite'] == true ) {            
             
             trsrc.push(`<script type="module">\n`+
               ` import * as itmp from "/sites/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
               ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
-              
+            homeUrl = `/sites/${plug['dir']}`;
+            
           } else if( plug['external'] == true && plug['asModule'] == true ){
-
+            
             trsrc.push(`<script type="module">\n`+
                 ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
                 ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
+              homeUrl = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
 
-          } else {
+            } else {
             
             trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
+            homeUrl = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
 
           }
-
+          
       }
       
       trjs.push( "\n// -- start of"+plug['oName']);
       trjs.push( 'cl("adding: '+plug['oName']+'"); ' );
       trjs.push( 'yssPages['+p+']["o"] = new '+plug['oName']+'();' );
       trjs.push( 'yssPages['+p+']["o"]["instanceOf"] = '+JSON.stringify(plug)+';');
+      trjs.push( 'yssPages['+p+']["o"]["homeUrl"] = "'+homeUrl+'";');
       trjs.push( 'pager.addPage( yssPages['+p+']["o"] );' );
       trjs.push( "// -- end of"+plug['oName']+"\n" );
       
       if( plug['enable'] == false /* || plug['asVite'] == true */){
           trsrc.push( ' IS DISABLED -->' );
           trjs.push( ' IS DISABLED */' );
-      }
-
+        }
+        
   }
-  
   
   
   ta+= ` built automaticli in sitesHelp.js -->
   `+trsrc.join("\n")+`
   <script>
-
+  
   var yssPages = `+JSON.stringify(yssPages)+`;
-
+  var siteByKey = {};
+  yssPages.forEach(s => {
+    //console.log("doing: "+s.oName);
+    siteByKey[ s.oName ] = s; 
+  });
+  
+  
   function nodeRedInjectionAddPages(){
       cl("node red injection add page .......");
       `+trjs.join("\n\t")+`
-  }
-  </script>
-  <!--build automaticli in sitesHelp.js `;
+      }
+      </script>
+      <!--build automaticli in sitesHelp.js `;
 
-  mesCashe = "sites build count: "+yssPages.length+` / `+sList.length+` enabled: ${enabledC}/${sList.length}`;
-  cl("[i] sites build count: "+yssPages.length+` / `+sList.length+
-    `\n\t `+sList.join(', ')+'\n'+
-    `enabled: ${enabledC}/${sList.length} and (${viteC}) in asVite`
-   );
-   //cl(yssPages);
-  mcashe = ta;
-  
+      mesCashe = "sites build count: "+yssPages.length+` / `+sList.length+` enabled: ${enabledC}/${sList.length}`;
+      cl("[i] sites build count: "+yssPages.length+` / `+sList.length+
+        `\n\t `+sList.join(', ')+'\n'+
+        `enabled: ${enabledC}/${sList.length} and (${viteC}) in asVite`
+      );
+      //cl(yssPages);
+      mcashe = ta;
+      
   //casheCon[keyOf] = ta;
   
   if( resAs == 'html' )
@@ -181,6 +192,16 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
 
 }
 
+function getYssPagesSitesIndex( pathToScan ){
+  let yssPages = [];
+  for( let p=0,pc=pathToScan.length; p<pc; p++ ){
+    let yptmp = getSitesIndex( pathToScan[p], p );
+    let yptmpLen = yptmp.length;
+    cl(`  have ${yptmpLen} sites ...`);
+    yssPages = yssPages.concat( yptmp );
+  }
+  return yssPages;
+}
 
 function doSiteToJ( path2index, listd, siteNo ){
   fPathStr = path.join( path2index, listd, `site.json` );

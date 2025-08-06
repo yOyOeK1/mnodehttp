@@ -51,7 +51,7 @@ function getWsInstance( nconfig, cbOnMes = undefined ){
     cl(`[i] Server WS [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
     let wss = new WebSocket.Server({host:nconfig.wsHOST ,port:nconfig.wsPORT});
     wss.on('connection', ws => {
-        cl('New client connected');
+        
 
         if( cbOnMes != undefined )
             cbOnMes( ws, 'on_connection' );
@@ -63,9 +63,10 @@ function getWsInstance( nconfig, cbOnMes = undefined ){
         
         
         ws.on('message', message => {
-            cl(`[${nconfig.name}] Received message from client: ${message}`);
             if( cbOnMes != undefined )
                 cbOnMes( ws, 'on_message', message );
+            else
+                cl(`[${nconfig.name}] Received message from client: ${message}`);
             // Echo the message back to the client
             //ws.send(`Server received: ${message}`);
         });
