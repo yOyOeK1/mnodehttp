@@ -23,7 +23,7 @@ function bEnd( bStartRes ){
 }
 
 async function transformIt( server, filePath , res, req){
-    console.log(`transformIt filePath: ${filePath}`);
+    //console.log(`transformIt filePath: ${filePath}`);
     let transformedResult = await server.transformRequest(filePath, {
         ssr: false, // Set ssr to false for client-side code
         });
@@ -40,7 +40,7 @@ async function transformIt( server, filePath , res, req){
     return `transforme error :(`;
 }
 
-function requestYss( req, res, next, config, server ){
+function requestYss( req, res, next, config, server, yssPages ){
 
     var { method } = req;
     var parsedUrl = url.parse(req.url, true);
@@ -101,17 +101,53 @@ function requestYss( req, res, next, config, server ){
                 let fileTr = t.slice(4, t.length).join("/");
                 let fullPath = path.join( config.pathsToSites[sNo], fileTr );
                 
-                console.log(`-- path: ${fullPath}`);
-                if( fullPath.endsWith('.js') &&
-                    fullPath == '/home/yoyo/Apps/viteyss/node_modules/viteyss-site-otdmtools/c_otdmtoolsPage.js'
+                let p = yssPages;
+              let doTns = false;
+                for( let s of yssPages ){
+                    if( doTns == true)
+                        break; 
+
+                    if( 1 ){
+                        //s.oName == 'c_otdmtoolsPage' && String(fullPath).endsWith('c_otdmtoolsPage.js') ){
+                        //console.log(s.modsrc);
+                        //let abc = 1;
+                        if( 
+                            s.asModule == true &&
+                            s.jssrc.length > 0 && 
+                            String(s.siteNo) == sNo && 
+                            String(fullPath).startsWith( s.fDir )
+                        ){
+
+                            for( let f of s.jssrc ){
+                                if( String(fullPath).endsWith( f ) ){
+                                    //console.log('will transform this one !');
+                                    doTns = true;
+                                    break;
+                                }                   
+                                
+                            }
+
+                            if( String(fullPath).endsWith('.vue' ) ){
+                               doTns = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+
+                if(  doTns
+                    //fullPath.endsWith('.js') &&
+                    //fullPath == '/home/yoyo/Apps/viteyss/node_modules/viteyss-site-otdmtools/c_otdmtoolsPage.js'
                 ){
-                    console.log(`----------path now: ${config.pathsToSites[sNo]}`);
+                    //console.log(`-- path: ${fullPath}`);
+                    //console.log(`----------path now: ${config.pathsToSites[sNo]}`);
                     res.setHeader('Content-Type', 'application/javascript');
                     let tRes = transformIt(server, 
                         fullPath,
                         res, req);
                     tRes.then((r)=>{
-                        console.log(`so transform done:\n${r}`);
+                        //console.log(`so transform done:\n${r}`);
                     });
                     return 0;
 
