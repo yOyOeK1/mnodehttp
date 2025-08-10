@@ -56,15 +56,24 @@ function requestYss( req, res, next, config, server, yssPages ){
         pathname = '/yss/sitesTestExtDir/'+pathname.substring(14);
     }
 
-    if( method == 'POST' ){
     
-        cl(`[d] POST`);
-        cl(query);
-        cl(parsedUrl);
-        resJson(res, {"method": "POST", "pathname": pathname, "result": "OK" });
+    /*if( method == 'POST' ){
+        if( pathname == '/api' ){
+            cl(`[d] POST to / api ......`);
+
+            cl(`[d] POST to / api ......DONE `);
+        }
+        
+        //cl(`[d] POST`);
+        //cl(query);
+        //cl(parsedUrl);
+        return 'no post action to do';
+        //resJson(res, {"method": "POST", "pathname": pathname, "result": "OK" });
     
 
-    } else if( method == 'GET' ){
+    } else
+    */ 
+    if( method == 'GET' ){
     
         if( pathname == '/zeroSites' ){
             cl("--- zero sites ---");
