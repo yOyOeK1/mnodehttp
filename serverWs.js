@@ -48,8 +48,17 @@ function closeAll( ws, msg ){
 
 
 function getWsInstance( nconfig, cbOnMes = undefined ){
-    cl(`[i] Server WS [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
-    let wss = new WebSocket.Server({host:nconfig.wsHOST ,port:nconfig.wsPORT});
+    
+    let wss = undefined;
+    
+    if( nconfig.https == true ){
+        cl(`[i] Server WSS [${nconfig.name}] running at WSS://${nconfig.wsHOST}:${nconfig.wsPORT}/fooWSS`);
+        wss = new WebSocket.Server({noServer: true});
+    }else{
+        cl(`[i] Server WS [${nconfig.name}] running at ws://${nconfig.wsHOST}:${nconfig.wsPORT}`);
+        wss = new WebSocket.Server({host:nconfig.wsHOST ,port:nconfig.wsPORT});
+    }
+
     wss.on('connection', ws => {
         
 
