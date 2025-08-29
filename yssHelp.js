@@ -5,6 +5,7 @@ import fsH from './fsHelp.js'
 import sitesH from './sitesHelp.js'
 import { mkVueTemplateStr } from './vueHelp.js';
 import mimeH from './mimeHelp.js'
+//import { resJson } from './serverHttp.js';
 
 const getMimeFromExt = mimeH.getMimeFromExt;
 
@@ -102,7 +103,7 @@ function requestYss( req, res, next, config, server, yssPages ){
         } else if( pathname.substring(0,12) == '/yss/siteNo/' ){
 
             let t = pathname.split('/');
-            if( t.length <= 5){
+            if( t.length <= 3){
                 resJson(res, {"pathname": pathname, "result": "ERROR", "msg": "wrong pathname" });      
                 return 0;
             } else {
@@ -250,7 +251,10 @@ function requestYss( req, res, next, config, server, yssPages ){
     return 0;
 }
 
-
+function resJson( res, j ){
+  resSetHeaders( res, code=200, contentType="text/javascript" );
+  res.end( JSON.stringify(j) );
+}
 
 function resSetHeaders( res, code = 200, contentType = 'text/plain' ){
   res.setHeader('Access-Control-Allow-Origin', '*');
