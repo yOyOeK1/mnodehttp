@@ -2,9 +2,23 @@
 
 - [ ] TODO @yss ws address to connect as a href parser ? same host for http same for ws if not set in config?
 
-- [ ] TODO @yss if site in load after use and there is no last time use site it's freez. not found site handler
+- [ ] @mnodehttp 
+  
+  - [ ] when no clients don't ping
+  
+  - [ ] config option log level? to be no logs to console 
 
-- [ ] TODO @node-yss sitesHelp.js need getInjectionStre fix. remove old stuff about external or not external site. now all are external
+- [ ] @yss new site *3d action clips* exploration into threejs and mixers of blender -> gbl -> 3d scene on web page with control over action clips define in blender to have nice ability to control your 3d objects. Chk sites / 3d action clips
+
+- [ ] @sites 3d_action_clips / t4y_click - when left a site it's still active 
+
+- [ ] @yss site.json visible: true | false
+
+- [ ] @yss screen manager revamp  
+  
+  - [ ] loosing enhance from jqm in external screens
+
+- [ ] @node-yss sitesHelp.js need getInjectionStre fix. remove old stuff about external or not external site. now all are external
 
 - [ ] @otdmTools - port to npm o.O
   
@@ -20,10 +34,6 @@
 
 - [ ] TODO **...?qtdmQ:....** where to put it?
 
-- [ ] @yss screen manager revamp  
-  
-  - [ ] loosing enhance from jqm in external screens
-
 - [ ] wsCallBack for *yss* websocet basic commands 
   
   - [x] *SM:* - screen manager separet group flow 
@@ -31,17 +41,30 @@
 
 - [x] @npm_postinstall did a tests chk */home/yoyo/Apps/npmScriptTest1*. It's use case example of postinstall script. To do git partial directory cloning?
 
-- [x] @yss need to look in href to check for **&resizeTo=w,h** so kiosk can be adjusted
+## v251008
 
-- [x] @yss is down to one websocet connection :) oryginaly it had 3
+- [x] version 0.0.15
+- [x] can do mimetype for json
+- tests on site as promise not done
+- injecton of sites rebuild to add variables for viteyss-runIt
+- some debug for siteNo info
 
 
+## v250716 yss
+
+- [x] is down to one websocet connection :) oryginaly it had 3
+
+- [x] need to look in href to check for **&resizeTo=w,h** so kiosk can be adjusted
+
+- [x] if site in load after use and there is no last time use site it's freez. not found site handler
+
+- [x] double *getMenu* execution why? but not it's doing it one time
 
 ## v0.1.7 mnodehttp
 
 - [x] found lost parts :)
 
-- [x] fsHelp have cashe option
+- [x] *fsHelp* have cashe option
 
 ## v0.01 node-red-contrib-mnodehttp
 

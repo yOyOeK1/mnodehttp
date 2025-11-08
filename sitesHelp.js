@@ -65,7 +65,14 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   
 
  trsrc = [];
-  trjs = [];
+  trjs = [`function isPromise(value) {
+  return (
+    value &&
+    (typeof value === 'object' || typeof value === 'function') &&
+    typeof value.then === 'function'
+  );
+}
+  `];
   sList= [];
   enabledC = 0;
   viteC = 0;
@@ -73,7 +80,8 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   moduleCode = '';
   
   for( let p=0,pc=yssPages.length; p<pc; p++ ){
-    var plug = yssPages[p];
+    let plug = yssPages[p];
+    plug['o'] = {};
       //cl(`making site: ${plug.dir} name [${plug.oName}]`);
       
 
@@ -102,65 +110,88 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
       let jssrcLen = plug['jssrc'] != undefined ? plug['jssrc'].length: 0;
       for( let s=0,sc=jssrcLen; s<sc; s++ ){
           if( plug['external'] == false ){
-              
+            plug.o['homeUrl'] = `sites/`+plug['dir']+`/`+plug['jssrc'][s];  
             trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
-              homeUrl = `sites/`+plug['dir']+`/`+plug['jssrc'][s];
 
               // plugin 
           }else if( plug['asPlugin'] == true && plug['asModule'] == true && plug['asVite'] == true  ){
-            
+            plug.o['homeUrl'] = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
             trsrc.push(`<script type="module">\n`+
-              ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+              ` console.log('adding o import1  ${plug.o['homeUrl']}  / ${plug.oName}'); 
+                import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
               ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);
-              homeUrl = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
               
           } else if( plug['external'] == true && plug['asVite'] == true ) {            
-            
+            plug.o['homeUrl'] = `/sites/${plug['dir']}`;
             trsrc.push(`<script type="module">\n`+
-              ` import * as itmp from "/sites/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+              ` console.log('adding o import2  ${plug.o['homeUrl']}  / ${plug.oName}');
+                import * as itmp from "/sites/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
               ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
-            homeUrl = `/sites/${plug['dir']}`;
             
           } else if( plug['external'] == true && plug['asModule'] == true ){
-            
+            plug.o['homeUrl'] = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
             trsrc.push(`<script type="module">\n`+
-                ` import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
+                ` console.log('adding o import3  ${plug.o['homeUrl']}  / ${plug.oName}'); 
+                import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
                 ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
-              homeUrl = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
 
             } else {
             
+            plug.o['homeUrl'] = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
             trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
-            homeUrl = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
 
           }
           
       }
       
       trjs.push( "\n// -- start of"+plug['oName']);
-      trjs.push( 'cl("adding: '+plug['oName']+'"); ' );
-      trjs.push( 'yssPages['+p+']["o"] = new '+plug['oName']+'();' );
-      trjs.push( 'yssPages['+p+']["o"]["instanceOf"] = '+JSON.stringify(plug)+';');
-      trjs.push( 'yssPages['+p+']["o"]["homeUrl"] = "'+homeUrl+'";');
-      trjs.push( 'pager.addPage( yssPages['+p+']["o"] );' );
-      trjs.push( "// -- end of"+plug['oName']+"\n" );
+      trjs.push( 'cl("adding: '+plug['oName']+' - nice "); console.log("adding2:",'+plug['oName']+' );' );
+      //trjs.push( 'yssPages['+p+']["o"] = new '+plug['oName']+'();' );
+      //trjs.push( 'yssPages['+p+']["o"]["instanceOf"] = '+JSON.stringify(plug)+';');
+      //trjs.push( 'yssPages['+p+']["o"]["homeUrl"] = "'+homeUrl+'";');
+      //trjs.push( 'pager.addPage( yssPages['+p+']["o"] );' );
+      //trjs.push( "// -- end of"+plug['oName']+"\n" );
+
+      
+
+      trjs.push( `
+ 
+  
+  console.log('adding o ${plug.o['homeUrl']}  / ${plug.oName}');
+  
+  yssPages[${p}]["o"] = new ${plug['oName']}();
+  yssPages[${p}]["o"]["instanceOf"] = ${JSON.stringify(plug)};
+  yssPages[${p}]["o"]["homeUrl"] = "${plug.o['homeUrl']}";
+  
+  
+  pager.addPage( yssPages[${p}]["o"] );
+  
+  // -- end of ${plug['oName']}
+
+        `);
+
       
       if( plug['enable'] == false /* || plug['asVite'] == true */){
           trsrc.push( ' IS DISABLED -->' );
           trjs.push( ' IS DISABLED */' );
         }
         
+      yssPages[p]['o'] = plug['o'];
   }
   
   
   ta+= ` built automaticli in sitesHelp.js -->
+  <script>
+  var yssPages = `+JSON.stringify(yssPages)+`;
+  console.log('adding master list ...');
+  </script>
+  
   `+trsrc.join("\n")+`
   <script>
   
-  var yssPages = `+JSON.stringify(yssPages)+`;
   var siteByKey = {};
   yssPages.forEach(s => {
     //console.log("doing: "+s.oName);

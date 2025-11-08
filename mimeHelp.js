@@ -15,6 +15,8 @@ function getMimeFromExt(fname){
         mimeStr = "application/octet-stream";
     else if( ext == "ico" )
         mimeStr = "image/png";
+    else if( ext == "json" )
+        mimeStr ="application/manifest+json";
     else if( ext == "base64" )
         mimeStr = "image/jpeg";
     else if( ext == "svg" )

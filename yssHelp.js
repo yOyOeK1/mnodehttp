@@ -109,6 +109,11 @@ function requestYss( req, res, next, config, server, yssPages ){
             } else {
                 let sNo = t[3];
                 let fileTr = t.slice(4, t.length).join("/");
+                console.log('doing /yss/siteNo/ -- debug \n',
+                    '\nNo:',sNo,
+                    '\nconfig.pathsToSites',config.pathsToSites,
+                    '\nfileTr: ',fileTr
+                );
                 let fullPath = path.join( config.pathsToSites[sNo], fileTr );
                 
                 let p = yssPages;
