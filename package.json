@@ -4,6 +4,7 @@
   "description": "Host it by node and http. Ready for yss.",
   "main": "index.js",
   "homepage": "https://github.com/yOyOeK1/",
+  "type": "module",
   "scripts": {
     "start": "node ./startIt.js mnodehttp",
     "startAsDev": "node ./startItAsDev.js mnodehttp",
