@@ -239,7 +239,7 @@ function doSiteToJ( path2index, listd, siteNo ){
   //cl('doSiteToJ: fPathStr: '+fPathStr);
   let j = fsH.fileToJson( fPathStr );
   if( j == undefined ){
-    cl(`E dir [${fPathStr}] without site.json file !!!`);
+    process.stdout.write(`E dir [${fPathStr}] without site.json file !!!`);
     return undefined;
   }else{
     j["dir"] = listd;
