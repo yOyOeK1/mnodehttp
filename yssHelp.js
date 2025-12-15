@@ -284,4 +284,5 @@ function res404( str, res ){
 }    
 
 
-module.exports = { dirList, fileToJson,fileRead,fileReadToStr, getTempFilePath };
+//module.exports = { dirList, fileToJson,fileRead,fileReadToStr, getTempFilePath };
+export { requestYss, resSetHeaders, res404 };
