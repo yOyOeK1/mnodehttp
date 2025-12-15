@@ -17,5 +17,8 @@
     "startKioskAsDev": "./startKioskChrome.sh 'http://192.168.43.220:8080/yss/index.html'"
   },
   "license": "MIT",
-  "author": "Bartlomiej Ceglik <yoyoek@wp.pl>"
+  "author": "Bartlomiej Ceglik <yoyoek@wp.pl>",
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
 }
