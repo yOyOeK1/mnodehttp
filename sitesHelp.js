@@ -113,42 +113,53 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
             plug.o['homeUrl'] = `sites/`+plug['dir']+`/`+plug['jssrc'][s];  
             trsrc.push(`<script src="sites/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
 
+            sSet.srcs.push(`sites/${lug['dir']}/${plug['jssrc'][s]}`);
+
               // plugin 
           }else if( plug['asPlugin'] == true && plug['asModule'] == true && plug['asVite'] == true  ){
             plug.o['homeUrl'] = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
             trsrc.push(`<script type="module">\n`+
-              ` console.log('adding o import1  ${plug.o['homeUrl']}  / ${plug.oName}'); 
+              ` //console.log('adding o import1  ${plug.o['homeUrl']}  / ${plug.oName}'); 
                 import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
               ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);
               
+            sSet.module.push( [plug.oName, `./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}` ] );
+
+              
           } else if( plug['external'] == true && plug['asVite'] == true ) {            
             plug.o['homeUrl'] = `/sites/${plug['dir']}`;
             trsrc.push(`<script type="module">\n`+
-              ` console.log('adding o import2  ${plug.o['homeUrl']}  / ${plug.oName}');
+              ` //console.log('adding o import2  ${plug.o['homeUrl']}  / ${plug.oName}');
                 import * as itmp from "/sites/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
               ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
             
+            sSet.module.push( [plug.oName, `/sites/${plug['dir']}/${plug['jssrc'][s]}`] );
+
+            
           } else if( plug['external'] == true && plug['asModule'] == true ){
             plug.o['homeUrl'] = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
             trsrc.push(`<script type="module">\n`+
-                ` console.log('adding o import3  ${plug.o['homeUrl']}  / ${plug.oName}'); 
+                ` //console.log('adding o import3  ${plug.o['homeUrl']}  / ${plug.oName}'); 
                 import * as itmp from "./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}"; \n`+
                 ` ${plug.oName} = itmp.${plug.oName}; \n`+
               `</script>\n`);   
+
+              sSet.module.push( [plug.oName, `./siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}` ] );
 
             } else {
             
             plug.o['homeUrl'] = `./siteNo/${plug['siteNo']}/${plug['dir']}`;
             trsrc.push(`<script src="siteNo/${plug['siteNo']}/`+plug['dir']+`/`+plug['jssrc'][s]+`"></script>`);   
+            sSet.srcs.push(`siteNo/${plug['siteNo']}/${plug['dir']}/${plug['jssrc'][s]}`);
 
           }
           
       }
       
       trjs.push( "\n// -- start of"+plug['oName']);
-      trjs.push( 'cl("adding: '+plug['oName']+' - nice "); console.log("adding2:",'+plug['oName']+' );' );
+      //trjs.push( 'cl("adding: '+plug['oName']+' - nice "); console.log("adding2:",'+plug['oName']+' );' );
       //trjs.push( 'yssPages['+p+']["o"] = new '+plug['oName']+'();' );
       //trjs.push( 'yssPages['+p+']["o"]["instanceOf"] = '+JSON.stringify(plug)+';');
       //trjs.push( 'yssPages['+p+']["o"]["homeUrl"] = "'+homeUrl+'";');
@@ -183,13 +194,67 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   }
   
   
+  let modVarSets = '';
+  let modImportsSets = '';
+  let modimportToVar = '';
+  let modSrcs = '';
+  sSet.module.forEach( (s, i) =>{
+    modVarSets+=(`${s[0]}=-1, `);
+    modImportsSets+=(`import * as itmp${i} from "${s[1]}";\n`);
+    modimportToVar+=(`${s[0]} = itmp${i}.${s[0]};\n`);
+  });
+  sSet.srcs.forEach( ( s,i)=>{
+    modSrcs+= `<script src="${s}"></script>\n`;
+  });
+
+  let newImportMods = `  
+
+<!-- newImportMods  START -->
+
+
+<!--  srcs -->
+${modSrcs}
+
+<!--  modules to window variables -->
+<script>
+var ${modVarSets} dummySiteCup=null;
+</script>
+
+<!--  modules import asign to window variables -->
+<script type="module">
+${modImportsSets}
+
+${modimportToVar}
+</script>
+
+
+<!-- newImportMods  END -->
+`;
+  
   ta+= ` built automaticli in sitesHelp.js -->
+  
+  
+  
   <script>
+  
+  console.group('Sites init');
   var yssPages = `+JSON.stringify(yssPages)+`;
   console.log('adding master list ...');
+  
+  var siteSet = ${JSON.stringify(sSet)};
+  
   </script>
   
-  `+trsrc.join("\n")+`
+<!--/////////////////////// start NEW-->
+${newImportMods}
+<!--/////////////////////// END NEW-->
+
+`+
+/*`/////////////////////// OLD start 
+${trsrc.join("\n")}
+/////////////////////// OLD END`+*/
+`
+
   <script>
   
   var siteByKey = {};
@@ -203,8 +268,12 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
       cl("node red injection add page .......");
       `+trjs.join("\n\t")+`
       }
+
+    
+console.groupEnd('Sites init');
       </script>
-      <!--build automaticli in sitesHelp.js `;
+
+<!--build automaticli in sitesHelp.js\n`;
 
       mesCashe = "sites build count: "+yssPages.length+` / `+sList.length+` enabled: ${enabledC}/${sList.length}`;
       cl("[i] sites build count: "+yssPages.length+` / `+sList.length+
@@ -239,7 +308,7 @@ function doSiteToJ( path2index, listd, siteNo ){
   //cl('doSiteToJ: fPathStr: '+fPathStr);
   let j = fsH.fileToJson( fPathStr );
   if( j == undefined ){
-    process.stdout.write(`E dir [${fPathStr}] without site.json file !!!`);
+    //process.stdout.write(`E dir [${fPathStr}] without site.json file !!!`);
     return undefined;
   }else{
     j["dir"] = listd;
