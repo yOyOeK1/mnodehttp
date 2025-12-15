@@ -60,6 +60,4 @@ function fileToJson( path ){
     return undefined;
 }
 
-let fsH = { dirList, fileToJson,fileRead,fileReadToStr, getTempFilePath };
-
-export { fsH };
+module.exports = { dirList, fileToJson,fileRead,fileReadToStr, getTempFilePath };
