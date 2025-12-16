@@ -19,7 +19,6 @@
   "license": "MIT",
   "author": "Bartlomiej Ceglik <yoyoek@wp.pl>",
   "dependencies": {
-    "node-yss": "file:../node-yss/node-yss-latest.tgz",
     "ws": "^8.18.3"
   }
 }
