@@ -47,6 +47,12 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
     return mcashe;
   } 
   */
+
+  if( resAs == 'yssPages' ){
+    debugger
+  }
+
+
   let keyOf = JSON.stringify( pathsToSites );
   cl(`  [cache] -[${keyOf}]-> `);
   if( 0 && casheCon[keyOf] ){
@@ -64,8 +70,8 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   */
   
 
- trsrc = [];
-  trjs = [`function isPromise(value) {
+let trsrc = [];
+let trjs = [`function isPromise(value) {
   return (
     value &&
     (typeof value === 'object' || typeof value === 'function') &&
@@ -73,11 +79,15 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   );
 }
   `];
-  sList= [];
-  enabledC = 0;
-  viteC = 0;
-  moduleStr = '';
-  moduleCode = '';
+let sList= [];
+let enabledC = 0;
+let viteC = 0;
+let moduleStr = '';
+let moduleCode = '';
+let sSet = {
+  'srcs':[],
+  'module':[]
+};
   
   for( let p=0,pc=yssPages.length; p<pc; p++ ){
     let plug = yssPages[p];
@@ -167,7 +177,7 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
       //trjs.push( "// -- end of"+plug['oName']+"\n" );
 
       
-
+      
       trjs.push( `
  
   
