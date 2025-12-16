@@ -1,6 +1,6 @@
 {
   "name": "mnodehttp",
-  "version": "0.1.16",
+  "version": "0.19.900",
   "description": "Host it by node and http. Ready for yss.",
   "main": "index.js",
   "homepage": "https://github.com/yOyOeK1/",
@@ -16,6 +16,11 @@
     "startKiosk": "./startKioskChrome.sh 'http://localhost:8080/yss/index.html'",
     "startKioskAsDev": "./startKioskChrome.sh 'http://192.168.43.220:8080/yss/index.html'"
   },
+  "keywords": [
+    "oiyshTerminal",
+    "ot",
+    "yss"
+  ],
   "license": "MIT",
   "author": "Bartlomiej Ceglik <yoyoek@wp.pl>",
   "dependencies": {
