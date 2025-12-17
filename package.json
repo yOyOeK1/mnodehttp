@@ -14,7 +14,9 @@
     "postpack": "cp './'$npm_package_name'-'$npm_package_version'.tgz' './'$npm_package_name'-latest.tgz' ;exit 0",
     "updateLoc-node-yss": "npm uninstall node-yss; npm i /home/yoyo/Apps/node-yss/node-yss-latest.tgz",
     "startKiosk": "./startKioskChrome.sh 'http://localhost:8080/yss/index.html'",
-    "startKioskAsDev": "./startKioskChrome.sh 'http://192.168.43.220:8080/yss/index.html'"
+    "startKioskAsDev": "./startKioskChrome.sh 'http://192.168.43.220:8080/yss/index.html'",
+
+    "mkBackup": "fn=$npm_package_name\"_v\"$npm_package_version\"_tt\"`date +%y%m%d%H%M%S`\".tar.bz2\"; echo \"name will be [$fn]\";  tar --exclude=\".git\" --exclude=\"node_modules\" -cvf \"../\"$fn ./; echo \"Backup done: [$fn]\"; ls -alh ../$fn"
   },
   "keywords": [
     "oiyshTerminal",
