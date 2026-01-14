@@ -2,6 +2,8 @@ const fs = require('fs');
 var path = require('node:path');
 const fsH = require('./fsHelp.js');
 
+let debug = 'viteyssDebug' in process.env ? (process.env.viteyssDebug=='true'?true:false) : false;
+
 var mcashe = '';
 var mesCashe = '';
 var yssPagesArrayLast = -1;
@@ -48,9 +50,9 @@ function getInjectionStr( pathToYss, pathsToSites, resAs = 'html' ){
   } 
   */
 
-  if( resAs == 'yssPages' ){
-    debugger
-  }
+  //if( resAs == 'yssPages' ){
+  //  debugger
+  //}
 
 
   let keyOf = JSON.stringify( pathsToSites );
@@ -288,7 +290,7 @@ console.groupEnd('Sites init');
       mesCashe = "sites build count: "+yssPages.length+` / `+sList.length+` enabled: ${enabledC}/${sList.length}`;
       cl("[i] sites build count: "+yssPages.length+` / `+sList.length+
         `\n\t `+sList.join(', ')+'\n'+
-        `enabled: ${enabledC}/${sList.length} and (${viteC}) in asVite`
+        `* enabled: ${enabledC}/${sList.length} and (${viteC}) in asVite`
       );
       //cl(yssPages);
       mcashe = ta;
@@ -307,7 +309,7 @@ function getYssPagesSitesIndex( pathToScan ){
   for( let p=0,pc=pathToScan.length; p<pc; p++ ){
     let yptmp = getSitesIndex( pathToScan[p], p );
     let yptmpLen = yptmp.length;
-    cl(`  have ${yptmpLen} sites ...`);
+    if( debug ) cl(`  have ${yptmpLen} sites ...`);
     yssPages = yssPages.concat( yptmp );
   }
   return yssPages;
@@ -330,7 +332,7 @@ function doSiteToJ( path2index, listd, siteNo ){
 }
 
 function getSitesIndex( path2index, siteNo = undefined ){
-  cl(" indexing siteNo["+siteNo+"] : "+path2index);
+  if(debug) cl(" indexing siteNo["+siteNo+"] : "+path2index);
   let list = fsH.dirList( path2index );
   if( list == undefined ) return [];
   let tr = [];
@@ -358,7 +360,7 @@ function getSitesIndex( path2index, siteNo = undefined ){
   // direct site path
   let j = doSiteToJ( path2index, '', siteNo );
   if( j != undefined ){
-    cl("[d] direct site path :) (plugin ?)")
+    if( debug ) cl("[d] direct site path :) (plugin ?)")
     tr.push( j );
   }
 

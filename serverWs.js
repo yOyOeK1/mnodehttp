@@ -3,7 +3,7 @@ const WebSocket = require('ws');
 
 
 function cl(str){
-    console.log('sWS ', str);
+    console.log('[sWS] ', str);
 }
 
 
